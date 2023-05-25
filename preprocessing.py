@@ -55,14 +55,15 @@ for attribute in ['heartrate', 'resprate', 'o2sat', 'map']:
 
 for attribute in ['heartrate', 'resprate', 'o2sat', 'map']:
     for df in [train_df, test_df]:
-        df[attribute] = (df[attribute] - lower_bounds[attribute]) / (upper_bounds[attribute] - lower_bounds[attribute])
+        df[attribute+'_err'] = (df[attribute] - lower_bounds[attribute]) / (upper_bounds[attribute] - lower_bounds[attribute])
 
 
 for attribute in ['heartrate', 'resprate', 'o2sat', 'map']:
     for df in [train_df, test_df]:
-        df[attribute+'_err'] = df[attribute].transform(
+        df[attribute+'_err'] = df[attribute+'_err'].transform(
             lambda x: ( 0.1*normalVal(x,attribute) if (0 <= x <= 1.0) else 0.1+(-x if x<0 else x-1) ))
-        df[attribute] = (df[attribute] - df[attribute].min()) / (df[attribute].max() - df[attribute].min())
+        df[attribute] = np.abs(df[attribute] - (lower_bounds[attribute]+upper_bounds[attribute])/2.0)
+        df[attribute] = np.divide(df[attribute],np.max(df[attribute]))
         # plt.hist(df[attribute+'_err'],bins=100)
         # plt.title(attribute+'_err')
         # plt.show()
