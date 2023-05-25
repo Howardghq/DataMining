@@ -44,6 +44,19 @@ class LSTMModel(nn.Module):
         out, _ = self.lstm(x, (h0, c0))
         out = self.fc(out[:, -1, :])
         return out
+    
+
+class GRUModel(nn.Module):
+    def __init__(self, input_dim, hidden_dim, output_dim):
+        super(GRUModel, self).__init__()
+        self.hidden_dim = hidden_dim
+        self.gru = nn.GRU(input_dim, hidden_dim, batch_first=True)
+        self.fc = nn.Linear(hidden_dim, output_dim)
+    
+    def forward(self, x):
+        _, h = self.gru(x)
+        out = self.fc(h)
+        return out
 
 
 train_dataset = PatientDataset('../dataset/train_clean.csv')
@@ -59,7 +72,7 @@ batch_size = 1
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-model = LSTMModel(input_size, hidden_size, output_size)
+model = GRUModel(input_size, hidden_size, output_size)
 
 criterion = nn.SmoothL1Loss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
