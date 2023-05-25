@@ -19,7 +19,7 @@ class PatientDataset(Dataset):
         patient_id = self.data['id'].unique()[idx]
         patient_data = self.data[self.data['id'] == patient_id]
 
-        inputs = torch.Tensor(patient_data[['heartrate', 'resprate', 'map', 'o2sat']].values)
+        inputs = torch.Tensor(patient_data[['heartrate', 'resprate', 'map', 'o2sat','heartrate_err', 'resprate_err', 'map_err', 'o2sat_err']].values)
         label = torch.Tensor([patient_data.iloc[-1]['label']])
 
         sample = {
@@ -49,7 +49,7 @@ class LSTMModel(nn.Module):
 train_dataset = PatientDataset('../dataset/train_clean.csv')
 test_dataset = PatientDataset('../dataset/test_clean.csv')
 
-input_size = 4
+input_size = 8
 hidden_size = 64
 output_size = 1
 learning_rate = 0.001
