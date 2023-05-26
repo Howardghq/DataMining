@@ -76,17 +76,17 @@ df0=train_df[train_df.label==0]
 df1=train_df[train_df.label==1]
 print(df0.shape,df1.shape)
 
-for attribute in ['heartrate', 'resprate', 'o2sat', 'map']:
-    for df in [df0, df1]:
-        plt.hist(df[attribute+'_err'],bins=50)
-        plt.title(attribute+'_err')
-        plt.show()
+# for attribute in ['heartrate', 'resprate', 'o2sat', 'map']:
+#     for df in [df0, df1]:
+#         plt.hist(df[attribute+'_err'],bins=50)
+#         plt.title(attribute+'_err')
+#         plt.show()
 
-for attribute in ['heartrate', 'resprate', 'o2sat', 'map']:
-    for df in [df0, df1]:
-        plt.hist(df[attribute], bins=50)
-        plt.title(attribute)
-        plt.show()
+# for attribute in ['heartrate', 'resprate', 'o2sat', 'map']:
+#     for df in [df0, df1]:
+#         plt.hist(df[attribute], bins=50)
+#         plt.title(attribute)
+#         plt.show()
 
 # for attribute in ['heartrate', 'resprate', 'o2sat', 'map']:
 #     train_df[attribute] = (train_df[attribute] - lower_bounds[attribute]) / (upper_bounds[attribute] - lower_bounds[attribute])
@@ -96,6 +96,21 @@ for attribute in ['heartrate', 'resprate', 'o2sat', 'map']:
 train_df['time'] = pd.to_datetime(train_df['time']).apply(lambda x: int(int(time.mktime(time.strptime(str(x), "%Y-%m-%d %H:%M:%S")))))
 
 test_df['time'] = pd.to_datetime(test_df['time']).apply(lambda x: int(int(time.mktime(time.strptime(str(x), "%Y-%m-%d %H:%M:%S")))))
+
+previous_id = None
+previous_time = 0
+for df in [train_df, test_df]:
+    for index, row in df.iterrows():
+            current_id = row['id']
+            current_time = row['time']
+
+            if current_id != previous_id:
+                df.at[index, 'time'] = 0
+                previous_time = current_time
+            else:
+                df.at[index, 'time'] = (current_time - previous_time) / 86400
+
+            previous_id = current_id
 
 train_df.to_csv("../dataset/train_clean.csv")
 test_df.to_csv("../dataset/test_clean.csv")
