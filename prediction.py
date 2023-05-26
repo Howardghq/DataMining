@@ -19,7 +19,7 @@ class PatientDataset(Dataset):
         patient_id = self.data['id'].unique()[idx]
         patient_data = self.data[self.data['id'] == patient_id]
 
-        inputs = torch.Tensor(patient_data[['heartrate', 'resprate', 'map', 'o2sat','heartrate_err', 'resprate_err', 'map_err', 'o2sat_err']].values)
+        inputs = torch.Tensor(patient_data[['time', 'heartrate', 'resprate', 'map', 'o2sat','heartrate_err', 'resprate_err', 'map_err', 'o2sat_err']].values)
         label = torch.Tensor([patient_data.iloc[-1]['label']])
 
         sample = {
@@ -28,6 +28,21 @@ class PatientDataset(Dataset):
             'label': label
         }
         return sample
+
+
+class TransformerModel(nn.Module):
+    def __init__(self, input_dim, hidden_dim, num_layers, num_heads, output_dim, dropout):
+        super(TransformerModel, self).__init__()
+        self.transformer_encoder = nn.TransformerEncoder(
+            nn.TransformerEncoderLayer(input_dim, num_heads, hidden_dim, dropout),
+            num_layers
+        )
+        self.fc = nn.Linear(input_dim, output_dim)
+    
+    def forward(self, x):
+        x = self.transformer_encoder(x)
+        x = self.fc(x[:, -1, :]) 
+        return x
 
 
 class LSTMModel(nn.Module):
@@ -62,9 +77,12 @@ class GRUModel(nn.Module):
 train_dataset = PatientDataset('../dataset/train_clean.csv')
 test_dataset = PatientDataset('../dataset/test_clean.csv')
 
-input_size = 8
+input_size = 9
 hidden_size = 64
 output_size = 1
+num_layers = 2
+num_heads = 3
+dropout = 0.1
 learning_rate = 0.001
 num_epochs = 10
 batch_size = 1
@@ -73,8 +91,9 @@ train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 model = GRUModel(input_size, hidden_size, output_size)
+# model = TransformerModel(input_size, hidden_size, num_layers, num_heads, output_size, dropout)
 
-criterion = nn.SmoothL1Loss()
+criterion = nn.BCEWithLogitsLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 for epoch in range(num_epochs):
@@ -110,10 +129,7 @@ for epoch in range(num_epochs):
         optimizer.step()
 
     average_loss = train_loss / train_samples
-    print(f"Epoch {epoch+1}/{num_epochs}, Train Loss: {average_loss:.4f}")
-    print(f"Epoch {epoch+1}/{num_epochs}, Train Accuracy: {accuracy_score(train_label, train_pred):.4f}")
-    print(f"Epoch {epoch+1}/{num_epochs}, Train Precision: {precision_score(train_label, train_pred):.4f}")
-    print(f"Epoch {epoch+1}/{num_epochs}, Train Recall: {recall_score(train_label, train_pred):.4f}")
+    print(f"Epoch {epoch+1}/{num_epochs}, Train Loss: {average_loss:.4f}, Accuracy: {accuracy_score(train_label, train_pred):.4f}, Precision: {precision_score(train_label, train_pred):.4f}, Recall: {recall_score(train_label, train_pred):.4f}, F1: {f1_score(train_label, train_pred):.4f}")
 
     model.eval()
     test_loss = 0.0
@@ -140,7 +156,4 @@ for epoch in range(num_epochs):
         test_samples += 1
 
     average_loss = test_loss / test_samples
-    print(f"Epoch {epoch+1}/{num_epochs}, Test Loss: {average_loss:.4f}")
-    print(f"Epoch {epoch+1}/{num_epochs}, Test Accuracy: {accuracy_score(test_label, test_pred):.4f}")
-    print(f"Epoch {epoch+1}/{num_epochs}, Test Precision: {precision_score(test_label, test_pred):.4f}")
-    print(f"Epoch {epoch+1}/{num_epochs}, Test Recall: {recall_score(test_label, test_pred):.4f}")
+    print(f"Epoch {epoch+1}/{num_epochs}, Test Loss: {average_loss:.4f}, Accuracy: {accuracy_score(test_label, test_pred):.4f}, Precision: {precision_score(test_label, test_pred):.4f}, Recall: {recall_score(test_label, test_pred):.4f}, F1: {f1_score(test_label, test_pred):.4f}")
