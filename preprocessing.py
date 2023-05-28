@@ -19,8 +19,8 @@ def normalVal(x,attr):
     return 1-x
 
 
-train_df = pd.read_csv("../dataset/train.csv")
-test_df = pd.read_csv('../dataset/test.csv')
+train_df = pd.read_csv("./dataset/train.csv")
+test_df = pd.read_csv('./dataset/test.csv')
 
 # train_df = train_df.head(100)
 print(train_df.shape)
@@ -127,5 +127,5 @@ for attribute in ['heartrate_delta', 'resprate_delta', 'o2sat_delta', 'map_delta
         plt.show()
 
 
-train_df.to_csv("../dataset/train_clean.csv")
-test_df.to_csv("../dataset/test_clean.csv")
+train_df.to_csv("./dataset/train_clean.csv")
+test_df.to_csv("./dataset/test_clean.csv")

@@ -19,39 +19,44 @@ def normalVal(x,attr):
     return 1-x
 
 
-def toDf24(df):
+FIX_LEN = 20
+BASE_ATTR = ['heartrate','resprate','map', 'o2sat']
+BASE_ATTR_ERR = ['heartrate_err','resprate_err','map_err', 'o2sat_err']
+BASE_ATTR_DELTA = ['heartrate_delta','resprate_delta','map_delta', 'o2sat_delta']
+def toDfFixLen(df):
     group = df.groupby('id')
-    df24 = pd.DataFrame([], columns=col24, dtype=float)
+    df24 = pd.DataFrame([], columns=colFixLen, dtype=float)
     for key, value in group:
         # print('value.shape',value.shape)
         # print('value.columns',value.columns)
         # print('value',value)
-        cols = list(value.columns)
-        cols.remove('id')
-        cols.remove('time')
-        cols.remove('label')
-        # print(cols)
         patient = [value.iloc[-1]['id']]
-        for i in range(24):
-            tmp = (i + value.shape[0] - 24) if value.shape[0] >= 24 else min(i, value.shape[0] - 1)
+        lastTmp = 0
+        for i in range(FIX_LEN):
+            tmp = (i + value.shape[0] - FIX_LEN) if value.shape[0] >= FIX_LEN else min(i, value.shape[0] - 1)
             line = value.iloc[tmp]
+            lastLine = line if i==0 else value.iloc[lastTmp]
             # print('line',line)
             # print('\ttmp\t',tmp)
-            for col in cols:
+            for col in BASE_ATTR+BASE_ATTR_ERR:
                 patient.append(line[col])
+            for attr_id in range(len(BASE_ATTR)):
+                attr = BASE_ATTR[attr_id]
+                patient.append(line[attr]-lastLine[attr])
+            lastTmp = tmp
         patient.append(value.iloc[-1]['label']) # label
         # print(len(patient), patient)
         # print(value.shape)
         # df24=df24.append(patient,ignore_index=True)
         df24.loc[len(df24.index)] = patient
         if df24.shape[0]%1000==0:
-            print('\tturning to df24. shape:\t',df24.shape)
-    print('\tTurn to df24 over. shape:\t', df24.shape)
+            print('\tturning to dfFixLen. shape:\t',df24.shape)
+    print('\tTurn to dfFixLen over. shape:\t', df24.shape)
     return df24
 
 
-train_df = pd.read_csv("../dataset/train.csv")
-test_df = pd.read_csv('../dataset/test.csv')
+train_df = pd.read_csv("./dataset/train.csv")
+test_df = pd.read_csv('./dataset/test.csv')
 
 # train_df = train_df.head(100)
 print(train_df.shape)
@@ -62,6 +67,7 @@ print(train_df.shape)
 
 upper_bounds = {'heartrate': 100, 'resprate': 24, 'o2sat': 100, 'map': 105}
 lower_bounds = {'heartrate': 60, 'resprate': 12, 'o2sat': 95, 'map': 70}
+default_values = {'heartrate': 75, 'resprate': 20, 'o2sat': 100, 'map': 80}
 
 for attribute in ['heartrate', 'resprate', 'map', 'o2sat']:
     print(min(train_df[attribute]), max(train_df[attribute]))
@@ -80,12 +86,20 @@ for attribute in ['heartrate', 'resprate', 'map', 'o2sat']:
     for df in [train_df, test_df]:
         df[attribute+'_err'] = (df[attribute] - lower_bounds[attribute]) / (upper_bounds[attribute] - lower_bounds[attribute])
 
+# df0=train_df[train_df.label==0]
+# df1=train_df[train_df.label==1]
+# print(df0.shape,df1.shape)
+# for attribute in BASE_ATTR:
+#     for df in [df0, df1]:
+#         plt.hist(df[attribute], bins=50)
+#         plt.title(attribute)
+#         plt.show()
 
 for attribute in ['heartrate', 'resprate', 'map', 'o2sat']:
     for df in [train_df, test_df]:
         df[attribute+'_err'] = df[attribute+'_err'].transform(
             lambda x: ( 0.1*normalVal(x,attribute) if (0 <= x <= 1.0) else 0.1+(-x if x<0 else x-1) ))
-        df[attribute] = np.abs(df[attribute] - (lower_bounds[attribute]+upper_bounds[attribute])/2.0)
+        df[attribute] = np.abs(df[attribute] - default_values[attribute])
         df[attribute] = np.divide(df[attribute],np.max(df[attribute]))
         # plt.hist(df[attribute+'_err'],bins=100)
         # plt.title(attribute+'_err')
@@ -134,17 +148,15 @@ print(test_df.shape)
 
 
 
-col24 = ['id']
-for i in range(24):
-    for attr in ['heartrate', 'resprate', 'map', 'o2sat']:
-        col24.append('T'+str(i)+"_"+attr)
-    for attr in ['heartrate_err', 'resprate_err', 'map_err', 'o2sat_err']:
-        col24.append('T'+str(i)+"_"+attr)
-col24.append('label')
-print('col24:\t', len(col24), col24)
+colFixLen = ['id']
+for i in range(FIX_LEN):
+    for attr in BASE_ATTR+BASE_ATTR_ERR+BASE_ATTR_DELTA:
+        colFixLen.append('T'+str(i)+"_"+attr)
+colFixLen.append('label')
+print('colFixLen:\t', len(colFixLen), colFixLen)
 
-train_df24 = toDf24(train_df)
-test_df24 = toDf24(test_df)
+train_dfFixLen = toDfFixLen(train_df)
+test_dfFixLen = toDfFixLen(test_df)
 
-train_df24.to_csv("../dataset/train_clean24.csv")
-test_df24.to_csv("../dataset/test_clean24.csv")
+train_dfFixLen.to_csv("./dataset/train_clean"+str(FIX_LEN)+".csv")
+test_dfFixLen.to_csv("./dataset/test_clean"+str(FIX_LEN)+".csv")

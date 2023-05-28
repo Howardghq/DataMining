@@ -7,12 +7,14 @@ from torch.utils.data import DataLoader, Dataset
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-col24 = []
-for i in range(24):
-    for attr in ['heartrate', 'resprate', 'map', 'o2sat']:
-        col24.append('T' + str(i) + "_" + attr)
-    for attr in ['heartrate_err', 'resprate_err', 'map_err', 'o2sat_err']:
-        col24.append('T' + str(i) + "_" + attr)
+FIX_LEN=20
+BASE_ATTR = ['heartrate','resprate','map', 'o2sat']
+BASE_ATTR_ERR = ['heartrate_err','resprate_err','map_err', 'o2sat_err']
+BASE_ATTR_DELTA = ['heartrate_delta','resprate_delta','map_delta', 'o2sat_delta']
+colFixLen = []
+for i in range(FIX_LEN):
+    for attr in BASE_ATTR+BASE_ATTR_ERR+BASE_ATTR_DELTA:
+        colFixLen.append('T'+str(i)+"_"+attr)
 
 
 class PatientDataset(Dataset):
@@ -24,8 +26,8 @@ class PatientDataset(Dataset):
         for index, row in self.data.iterrows():
             self.ids.append(torch.Tensor([row['id']]))
             self.labels.append(torch.Tensor([row['label']]))
-            tmp = torch.Tensor(row[col24].values)
-            self.inputs.append(tmp.reshape(24,8))
+            tmp = torch.Tensor(row[colFixLen].values)
+            self.inputs.append(tmp.reshape(FIX_LEN,input_size))
             # print('tmp',tmp)
             # print('tmp2d', tmp.reshape(24,8))
         print('\tPatientDataset init over. patient num:\t', len(self.ids))
@@ -102,22 +104,22 @@ class GRUModel(nn.Module):
         return out
 
 
-train_dataset = PatientDataset('../dataset/train_clean24.csv')
-test_dataset = PatientDataset('../dataset/test_clean24.csv')
-
 # input_size = 9
-input_size = 8
+input_size = 12
 hidden_size = 128
 output_size = 1
 num_layers = 2
-num_heads = 3
+num_heads = 4
 dropout = 0.1
-learning_rate = 0.004
+learning_rate = 0.002
 num_epochs = 32
 batch_size = 128
 
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
-test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+train_dataset = PatientDataset("./dataset/train_clean"+str(FIX_LEN)+".csv")
+test_dataset = PatientDataset("./dataset/test_clean"+str(FIX_LEN)+".csv")
+
+train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
 model = GRUModel(input_size, hidden_size, output_size)
 # model = TransformerModel(input_size, hidden_size, num_layers, num_heads, output_size, dropout)
@@ -142,7 +144,12 @@ for epoch in range(num_epochs):
 
         optimizer.zero_grad()
 
-        outputs = model(inputs).reshape(-1)
+        tmp = model(inputs)
+        outputs = tmp.reshape(-1) if len(tmp)==len(labels) else tmp[-1].reshape(-1)
+        # print('model(inputs):\t',tmp)
+        # print('model(inputs)_shape:\t',tmp.shape)
+        # print('model(inputs)[-1]:\t',tmp[-1])
+        # print('model(inputs)[-1]_shape:\t',tmp[-1].shape)
         # print('outputs:\t',outputs)
         # print('outputs_shape:\t',outputs.shape)
         # print('labels:\t',labels)
@@ -178,7 +185,8 @@ for epoch in range(num_epochs):
         inputs = batch['inputs']
         labels = batch['label'].reshape(-1)
 
-        outputs = model(inputs).reshape(-1)
+        tmp = model(inputs)
+        outputs = tmp.reshape(-1) if len(tmp)==len(labels) else tmp[-1].reshape(-1)
 
         loss = criterion(outputs, labels)
         test_loss += loss.item()
@@ -195,4 +203,4 @@ for epoch in range(num_epochs):
                 test_pred = np.append(test_pred, 1)
 
     average_loss = test_loss / test_samples
-    print(f"\t\t\t\tTest Loss: {average_loss:.4f}, Accuracy: {accuracy_score(test_label, test_pred):.4f}, Precision: {precision_score(test_label, test_pred):.4f}, Recall: {recall_score(test_label, test_pred):.4f}, F1: {f1_score(test_label, test_pred):.4f}")
+    print(f"\t\t\tTest Loss: {average_loss:.4f}, Accuracy: {accuracy_score(test_label, test_pred):.4f}, Precision: {precision_score(test_label, test_pred):.4f}, Recall: {recall_score(test_label, test_pred):.4f}, F1: {f1_score(test_label, test_pred):.4f}")

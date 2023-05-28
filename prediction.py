@@ -80,8 +80,8 @@ class GRUModel(nn.Module):
         return out
 
 
-train_dataset = PatientDataset('../dataset/train_clean.csv')
-test_dataset = PatientDataset('../dataset/test_clean.csv')
+train_dataset = PatientDataset('./dataset/train_clean.csv')
+test_dataset = PatientDataset('./dataset/test_clean.csv')
 
 # input_size = 9
 input_size = 8
