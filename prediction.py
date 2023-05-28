@@ -144,8 +144,12 @@ for epoch in range(num_epochs):
     test_label = np.array([])
     test_pred = np.array([])
     for batch in test_loader:
+        print('batch:\t',batch)
         inputs = batch['inputs']
         labels = batch['label']
+        print('inputs:\t',inputs)
+        print('labels:\t',labels)
+        print('inputs_shape:\t',inputs.shape)
 
         outputs = model(inputs)
 

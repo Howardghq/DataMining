@@ -18,23 +18,43 @@ for i in range(24):
 class PatientDataset(Dataset):
     def __init__(self, csv_file):
         self.data = pd.read_csv(csv_file)
+        self.ids = []
+        self.labels = []
+        self.inputs = []
+        for index, row in self.data.iterrows():
+            self.ids.append(torch.Tensor([row['id']]))
+            self.labels.append(torch.Tensor([row['label']]))
+            tmp = torch.Tensor(row[col24].values)
+            self.inputs.append(tmp.reshape(24,8))
+            # print('tmp',tmp)
+            # print('tmp2d', tmp.reshape(24,8))
+        print('\tPatientDataset init over. patient num:\t', len(self.ids))
+
 
     def __len__(self):
-        return len(self.data['id'].unique())
+        # return len(self.data['id'].unique())
+        return len(self.ids)
 
     def __getitem__(self, idx):
-        patient_id = self.data['id'].unique()[idx]
-        patient_data = self.data[self.data['id'] == patient_id]
-
-
-        inputs = torch.Tensor(patient_data[col24].values)
-        label = torch.Tensor([patient_data.iloc[-1]['label']])
 
         sample = {
-            'patient_id': patient_id,
-            'inputs': inputs,
-            'label': label
+            'patient_id': self.ids[idx],
+            'inputs': self.inputs[idx],
+            'label': self.labels[idx]
         }
+
+        # patient_id = self.data['id'].unique()[idx]
+        # patient_data = self.data[self.data['id'] == patient_id]
+        #
+        #
+        # inputs = torch.Tensor(patient_data[col24].values)
+        # label = torch.Tensor([patient_data.iloc[-1]['label']])
+        #
+        # sample = {
+        #     'patient_id': patient_id,
+        #     'inputs': inputs,
+        #     'label': label
+        # }
         return sample
 
 
@@ -86,15 +106,15 @@ train_dataset = PatientDataset('../dataset/train_clean24.csv')
 test_dataset = PatientDataset('../dataset/test_clean24.csv')
 
 # input_size = 9
-input_size = len(col24)
-hidden_size = 64
+input_size = 8
+hidden_size = 128
 output_size = 1
 num_layers = 2
 num_heads = 3
 dropout = 0.1
-learning_rate = 0.001
-num_epochs = 10
-batch_size = 1
+learning_rate = 0.004
+num_epochs = 32
+batch_size = 128
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
@@ -112,27 +132,36 @@ for epoch in range(num_epochs):
     train_label = np.array([])
     train_pred = np.array([])
     for batch in train_loader:
+        # print('batch:\t',batch)
         inputs = batch['inputs']
-        labels = batch['label']
-        # print(inputs)
-        # print(labels)
+        labels = batch['label'].reshape(-1)
+        # if len(labels)<2:
+        #     print('inputs:\t',inputs)
+        # print('labels:\t',labels)
+        # print('inputs_shape:\t',inputs.shape)
 
         optimizer.zero_grad()
 
-        outputs = model(inputs)
+        outputs = model(inputs).reshape(-1)
+        # print('outputs:\t',outputs)
+        # print('outputs_shape:\t',outputs.shape)
+        # print('labels:\t',labels)
+        # print('labels_shape:\t',labels.shape)
 
-        loss = criterion(outputs.reshape(1), labels.reshape(1))
+        loss = criterion(outputs, labels)
         # print(loss)
         train_loss += loss.item()
         train_samples += 1
-        if int(labels.reshape(1).item()) == 0:
-            train_label = np.append(train_label, 0)
-        else:
-            train_label = np.append(train_label, 1)
-        if outputs.reshape(1).item() < 0.5:
-            train_pred = np.append(train_pred, 0)
-        else:
-            train_pred = np.append(train_pred, 1)
+
+        for id in range(len(outputs)):
+            if int(labels[id].item()) == 0:
+                train_label = np.append(train_label, 0)
+            else:
+                train_label = np.append(train_label, 1)
+            if outputs[id].item() < 0.5:
+                train_pred = np.append(train_pred, 0)
+            else:
+                train_pred = np.append(train_pred, 1)
 
         loss.backward()
         optimizer.step()
@@ -147,22 +176,23 @@ for epoch in range(num_epochs):
     test_pred = np.array([])
     for batch in test_loader:
         inputs = batch['inputs']
-        labels = batch['label']
+        labels = batch['label'].reshape(-1)
 
-        outputs = model(inputs)
+        outputs = model(inputs).reshape(-1)
 
-        loss = criterion(outputs.reshape(1), labels.reshape(1))
-        if int(labels.reshape(1).item()) == 0:
-            test_label = np.append(test_label, 0)
-        else:
-            test_label = np.append(test_label, 1)
-        if outputs.reshape(1).item() < 0.5:
-            test_pred = np.append(test_pred, 0)
-        else:
-            test_pred = np.append(test_pred, 1)
-
+        loss = criterion(outputs, labels)
         test_loss += loss.item()
         test_samples += 1
+
+        for id in range(len(outputs)):
+            if int(labels[id].item()) == 0:
+                test_label = np.append(test_label, 0)
+            else:
+                test_label = np.append(test_label, 1)
+            if outputs[id].item() < 0.5:
+                test_pred = np.append(test_pred, 0)
+            else:
+                test_pred = np.append(test_pred, 1)
 
     average_loss = test_loss / test_samples
     print(f"\t\t\t\tTest Loss: {average_loss:.4f}, Accuracy: {accuracy_score(test_label, test_pred):.4f}, Precision: {precision_score(test_label, test_pred):.4f}, Recall: {recall_score(test_label, test_pred):.4f}, F1: {f1_score(test_label, test_pred):.4f}")
