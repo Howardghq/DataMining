@@ -72,21 +72,6 @@ print(train_df.shape)
 print(test_df.shape)
 
 
-df0=train_df[train_df.label==0]
-df1=train_df[train_df.label==1]
-print(df0.shape,df1.shape)
-
-# for attribute in ['heartrate', 'resprate', 'o2sat', 'map']:
-#     for df in [df0, df1]:
-#         plt.hist(df[attribute+'_err'],bins=50)
-#         plt.title(attribute+'_err')
-#         plt.show()
-
-# for attribute in ['heartrate', 'resprate', 'o2sat', 'map']:
-#     for df in [df0, df1]:
-#         plt.hist(df[attribute], bins=50)
-#         plt.title(attribute)
-#         plt.show()
 
 # for attribute in ['heartrate', 'resprate', 'o2sat', 'map']:
 #     train_df[attribute] = (train_df[attribute] - lower_bounds[attribute]) / (upper_bounds[attribute] - lower_bounds[attribute])
@@ -103,14 +88,44 @@ for df in [train_df, test_df]:
     for index, row in df.iterrows():
             current_id = row['id']
             current_time = row['time']
-
             if current_id != previous_id:
                 df.at[index, 'time'] = 0
                 previous_time = current_time
             else:
                 df.at[index, 'time'] = (current_time - previous_time) / 86400
-
             previous_id = current_id
+
+previous_id = None
+previous_v = 0
+for attr in ['heartrate', 'resprate', 'o2sat', 'map']:
+    for df in [train_df, test_df]:
+        for index, row in df.iterrows():
+                current_id = row['id']
+                current_v = row[attr]
+                if current_id != previous_id:
+                    df.at[index, attr+"_delta"] = 0
+                    previous_v = current_v
+                else:
+                    df.at[index, attr+"_delta"] = (current_v - previous_v)
+                previous_id = current_id
+
+
+
+
+df0=train_df[train_df.label==0]
+df1=train_df[train_df.label==1]
+print(df0.shape,df1.shape)
+# for attribute in ['heartrate', 'resprate', 'o2sat', 'map']:
+#     for df in [df0, df1]:
+#         plt.hist(df[attribute+'_err'],bins=50)
+#         plt.title(attribute+'_err')
+#         plt.show()
+for attribute in ['heartrate_delta', 'resprate_delta', 'o2sat_delta', 'map_delta']:
+    for df in [df0, df1]:
+        plt.hist(df[attribute], bins=50)
+        plt.title(attribute)
+        plt.show()
+
 
 train_df.to_csv("../dataset/train_clean.csv")
 test_df.to_csv("../dataset/test_clean.csv")
