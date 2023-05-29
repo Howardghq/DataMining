@@ -122,7 +122,9 @@ test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
 params = get_gru_params()
 # fc_dense = nn.Linear(hidden_size, output_size)
-criterion = nn.BCEWithLogitsLoss()
+step_weight = [pow(0.9,FIX_LEN-i-1) for i in range(FIX_LEN)]
+# criterion = nn.BCEWithLogitsLoss(weight=torch.tensor(step_weight), pos_weight=torch.tensor([8]))
+criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([4]))
 optimizer = optim.Adam(params, lr=learning_rate)
 
 for epoch in range(num_epochs):
@@ -163,6 +165,8 @@ for epoch in range(num_epochs):
         # print('pred_output.shape:',pred_output.shape)
         # print('labels_shape:\t',labels.shape)
         #
+        # print('labels_shape:\t', torch.tensor(labels).unsqueeze(1).repeat(1,FIX_LEN).shape,'output_shape:\t', hidden_output.shape)
+        # loss = criterion(hidden_output, labels.unsqueeze(1).repeat(1,FIX_LEN)) # with weight
         loss = criterion(pred_output, labels)
         # print(loss)
         train_loss += loss.item()
@@ -203,6 +207,7 @@ for epoch in range(num_epochs):
             hidden_output = torch.concat(hidden_output,dim=1)
             pred_output = hidden_output[:,-1]
 
+            # loss = criterion(hidden_output, labels.unsqueeze(1).repeat(1,FIX_LEN)) # with weight
             loss = criterion(pred_output, labels)
             test_loss += loss.item()
             test_samples += 1
