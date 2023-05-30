@@ -60,19 +60,32 @@ class PatientDataset(Dataset):
         return sample
 
 
-class TransformerModel(nn.Module):
-    def __init__(self, input_dim, hidden_dim, num_layers, num_heads, output_dim, dropout):
-        super(TransformerModel, self).__init__()
-        self.transformer_encoder = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(input_dim, num_heads, hidden_dim, dropout),
-            num_layers
-        )
-        self.fc = nn.Linear(input_dim, output_dim)
+# class TransformerModel(nn.Module):
+#     def __init__(self, input_dim, hidden_dim, num_layers, num_heads, output_dim, dropout):
+#         super(TransformerModel, self).__init__()
+#         self.transformer_encoder = nn.TransformerEncoder(
+#             nn.TransformerEncoderLayer(input_dim, num_heads, hidden_dim, dropout),
+#             num_layers
+#         )
+#         self.fc = nn.Linear(input_dim, output_dim)
     
+#     def forward(self, x):
+#         x = self.transformer_encoder(x)
+#         x = self.fc(x[:, -1, :]) 
+#         return x
+
+
+class RNNModel(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size):
+        super(RNNModel, self).__init__()
+        self.hidden_size = hidden_size
+        self.rnn = nn.RNN(input_size, hidden_size, 2, batch_first=True)
+        self.fc = nn.Linear(hidden_size, output_size)
+
     def forward(self, x):
-        x = self.transformer_encoder(x)
-        x = self.fc(x[:, -1, :]) 
-        return x
+        _, h = self.rnn(x)
+        out = self.fc(h)
+        return out
 
 
 class LSTMModel(nn.Module):
@@ -121,7 +134,7 @@ test_dataset = PatientDataset("./dataset/test_clean"+str(FIX_LEN)+".csv")
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
-model = GRUModel(input_size, hidden_size, output_size)
+model = RNNModel(input_size, hidden_size, output_size)
 # model = TransformerModel(input_size, hidden_size, num_layers, num_heads, output_size, dropout)
 
 criterion = nn.BCEWithLogitsLoss()
