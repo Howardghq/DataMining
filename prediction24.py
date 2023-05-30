@@ -6,6 +6,8 @@ import numpy as np
 from torch.utils.data import DataLoader, Dataset
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve, confusion_matrix
 
 FIX_LEN=20
 BASE_ATTR = ['heartrate','resprate','map', 'o2sat']
@@ -134,11 +136,25 @@ test_dataset = PatientDataset("./dataset/test_clean"+str(FIX_LEN)+".csv")
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
-model = RNNModel(input_size, hidden_size, output_size)
+choice = "RNN"
+
+if choice == "RNN":
+    model = RNNModel(input_size, hidden_size, output_size)
+elif choice == "LSTM":
+    model = LSTMModel(input_size, hidden_size, output_size)
+elif choice == "GRU":
+    model = GRUModel(input_size, hidden_size, output_size)
 # model = TransformerModel(input_size, hidden_size, num_layers, num_heads, output_size, dropout)
 
 criterion = nn.BCEWithLogitsLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+train_losses = []
+train_f1s = []
+train_accuracies = []
+test_losses = []
+test_f1s = []
+test_accuracies = []
 
 for epoch in range(num_epochs):
     model.train()
@@ -188,6 +204,9 @@ for epoch in range(num_epochs):
 
     average_loss = train_loss / train_samples
     print(f"Epoch {epoch+1}/{num_epochs}, \tTrain Loss: {average_loss:.4f}, Accuracy: {accuracy_score(train_label, train_pred):.4f}, Precision: {precision_score(train_label, train_pred):.4f}, Recall: {recall_score(train_label, train_pred):.4f}, F1: {f1_score(train_label, train_pred):.4f}")
+    train_losses.append(average_loss)
+    train_f1s.append(f1_score(train_label, train_pred))
+    train_accuracies.append(accuracy_score(train_label, train_pred))
 
     model.eval()
     test_loss = 0.0
@@ -217,3 +236,55 @@ for epoch in range(num_epochs):
 
     average_loss = test_loss / test_samples
     print(f"\t\t\tTest Loss: {average_loss:.4f}, Accuracy: {accuracy_score(test_label, test_pred):.4f}, Precision: {precision_score(test_label, test_pred):.4f}, Recall: {recall_score(test_label, test_pred):.4f}, F1: {f1_score(test_label, test_pred):.4f}")
+    test_losses.append(average_loss)
+    test_f1s.append(f1_score(test_label, test_pred))
+    test_accuracies.append(accuracy_score(test_label, test_pred))
+
+    if epoch == num_epochs-1:
+        fpr, tpr, thresholds = roc_curve(test_label, test_pred)
+
+        plt.figure(figsize=(9, 6))
+        plt.plot(fpr, tpr)
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('ROC')
+        plt.savefig("../figure/" + choice+ "_ROC.jpg")
+
+        cm = confusion_matrix(test_label, test_pred)
+
+        plt.figure(figsize=(9, 6))
+        plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+        plt.title('Confusion Matrix')
+        plt.colorbar()
+        plt.xticks([0, 1], ['Predicted Negative', 'Predicted Positive'])
+        plt.yticks([0, 1], ['Actual Negative', 'Actual Positive'])
+        plt.xlabel('Predicted label')
+        plt.ylabel('True label')
+        plt.savefig("../figure/" + choice+"_Confusion.jpg")
+
+plt.figure(figsize=(9, 6))
+plt.plot(list(range(1, num_epochs + 1)), train_accuracies, label="train")
+plt.plot(list(range(1, num_epochs + 1)), test_accuracies, label="test")
+plt.legend(loc=4)
+plt.title(choice)
+plt.xlabel("Epoch")
+plt.ylabel("Accuracy")
+plt.savefig("../figure/" + choice + "_Accuracy.jpg", bbox_inches='tight')
+
+plt.figure(figsize=(9, 6))
+plt.plot(list(range(1, num_epochs + 1)), train_f1s, label="train")
+plt.plot(list(range(1, num_epochs + 1)), test_f1s, label="test")
+plt.legend(loc=4)
+plt.title(choice)
+plt.xlabel("Epoch")
+plt.ylabel("F1 Score")
+plt.savefig("../figure/" + choice + "_F1.jpg", bbox_inches='tight')
+
+plt.figure(figsize=(9, 6))
+plt.plot(list(range(1, num_epochs + 1)), train_losses, label="train")
+plt.plot(list(range(1, num_epochs + 1)), test_losses, label="test")
+plt.legend(loc=4)
+plt.title(choice)
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.savefig("../figure/" + choice + "_Loss.jpg", bbox_inches='tight')
