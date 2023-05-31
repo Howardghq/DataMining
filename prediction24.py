@@ -81,7 +81,7 @@ class RNNModel(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(RNNModel, self).__init__()
         self.hidden_size = hidden_size
-        self.rnn = nn.RNN(input_size, hidden_size, 2, batch_first=True)
+        self.rnn = nn.RNN(input_size, hidden_size, num_layers=2, batch_first=True, dropout=0.1)
         self.fc = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
@@ -94,13 +94,13 @@ class LSTMModel(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(LSTMModel, self).__init__()
         self.hidden_size = hidden_size
-        self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers=2, batch_first=True, dropout=0.1)
         self.fc = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
         batch_size = x.size(0)
-        h0 = torch.zeros(1, batch_size, self.hidden_size).to(x.device)
-        c0 = torch.zeros(1, batch_size, self.hidden_size).to(x.device)
+        h0 = torch.zeros(2, batch_size, self.hidden_size).to(x.device)
+        c0 = torch.zeros(2, batch_size, self.hidden_size).to(x.device)
         out, _ = self.lstm(x, (h0, c0))
         out = self.fc(out[:, -1, :])
         return out
@@ -110,7 +110,7 @@ class GRUModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim):
         super(GRUModel, self).__init__()
         self.hidden_dim = hidden_dim
-        self.gru = nn.GRU(input_dim, hidden_dim, batch_first=True)
+        self.gru = nn.GRU(input_dim, hidden_dim, num_layers=2, batch_first=True, dropout=0.1)
         self.fc = nn.Linear(hidden_dim, output_dim)
     
     def forward(self, x):
@@ -125,9 +125,8 @@ hidden_size = 128
 output_size = 1
 num_layers = 2
 num_heads = 4
-dropout = 0.1
 learning_rate = 0.002
-num_epochs = 32
+num_epochs = 50
 batch_size = 128
 
 train_dataset = PatientDataset("./dataset/train_clean"+str(FIX_LEN)+".csv")
@@ -254,7 +253,7 @@ for choice in choices:
             confusion = confusion_matrix(test_label, test_pred)
 
             plt.figure(figsize=(9, 6))
-            plt.imshow(confusion, interpolation='nearest', cmap=plt.confusion.Blues)
+            plt.imshow(confusion, interpolation='nearest', cmap=plt.cm.Blues)
             plt.title('Confusion Matrix')
             plt.colorbar()
             plt.xticks([0, 1])
