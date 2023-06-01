@@ -86,29 +86,37 @@ for attribute in ['heartrate', 'resprate', 'map', 'o2sat']:
     for df in [train_df, test_df]:
         df[attribute+'_err'] = (df[attribute] - lower_bounds[attribute]) / (upper_bounds[attribute] - lower_bounds[attribute])
 
-# df0=train_df[train_df.label==0]
-# df1=train_df[train_df.label==1]
-# print(df0.shape,df1.shape)
-# for attribute in BASE_ATTR:
-#     for df in [df0, df1]:
-#         plt.hist(df[attribute], bins=50)
-#         plt.title(attribute)
-#         plt.show()
+
 
 for attribute in ['heartrate', 'resprate', 'map', 'o2sat']:
     for df in [train_df, test_df]:
         df[attribute+'_err'] = df[attribute+'_err'].transform(
             lambda x: ( 0.1*normalVal(x,attribute) if (0 <= x <= 1.0) else 0.1+(-x if x<0 else x-1) ))
+        print('???',min(df[attribute+'_err']),max(df[attribute+'_err']))
         df[attribute] = np.abs(df[attribute] - default_values[attribute])
         df[attribute] = np.divide(df[attribute],np.max(df[attribute]))
         # plt.hist(df[attribute+'_err'],bins=100)
         # plt.title(attribute+'_err')
         # plt.show()
-
+df0 = train_df[train_df.label == 0]
+df1 = train_df[train_df.label == 1]
+for attribute in BASE_ATTR_ERR:
+    for df in [df0, df1]:
+        plt.hist(df[attribute], bins=50)
+        plt.title("label=" + str(0 if df is df0 else 1) + ", " + attribute)
+        plt.show()
 print(train_df.shape)
 print(test_df.shape)
 
 
+df0=train_df[train_df.label==0]
+df1=train_df[train_df.label==1]
+print(df0.shape,df1.shape)
+for attribute in BASE_ATTR:
+    for df in [df0, df1]:
+        plt.hist(df[attribute], bins=50)
+        plt.title("label=" + str(0 if df is df0 else 1) + ", " + attribute)
+        plt.show()
 
 # for attribute in ['heartrate', 'resprate', 'o2sat', 'map']:
 #     train_df[attribute] = (train_df[attribute] - lower_bounds[attribute]) / (upper_bounds[attribute] - lower_bounds[attribute])
@@ -158,5 +166,17 @@ print('colFixLen:\t', len(colFixLen), colFixLen)
 train_dfFixLen = toDfFixLen(train_df)
 test_dfFixLen = toDfFixLen(test_df)
 
-train_dfFixLen.to_csv("./dataset/train_clean"+str(FIX_LEN)+".csv")
-test_dfFixLen.to_csv("./dataset/test_clean"+str(FIX_LEN)+".csv")
+# train_dfFixLen.to_csv("./dataset/train_clean"+str(FIX_LEN)+".csv")
+# test_dfFixLen.to_csv("./dataset/test_clean"+str(FIX_LEN)+".csv")
+df0=train_dfFixLen[train_dfFixLen.label==0]
+df1=train_dfFixLen[train_dfFixLen.label==1]
+
+for attribute in BASE_ATTR_DELTA:
+    for df in [df0, df1]:
+        val = []
+        for tmp in ['T'+str(i)+"_"+attribute for i in range(FIX_LEN)]:
+            val=val+df[tmp].tolist()
+        plt.hist(val, bins=50)
+        plt.title("label=" + str(0 if df is df0 else 1) + ", " + attribute)
+        plt.show()
+
