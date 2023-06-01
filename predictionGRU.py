@@ -6,6 +6,8 @@ import numpy as np
 from torch.utils.data import DataLoader, Dataset
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve, confusion_matrix
 # import d2lzh as d2l
 
 # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -15,10 +17,11 @@ output_size = 1
 num_layers = 2
 num_heads = 4
 dropout = 0.1
-learning_rate = 0.003
-num_epochs = 64
+learning_rate = 0.002
+num_epochs = 50
 batch_size = 128
 FIX_LEN=20
+choice = "GRUManual"
 BASE_ATTR = ['heartrate','resprate','map', 'o2sat']
 BASE_ATTR_ERR = ['heartrate_err','resprate_err','map_err', 'o2sat_err']
 BASE_ATTR_DELTA = ['heartrate_delta','resprate_delta','map_delta', 'o2sat_delta']
@@ -127,6 +130,13 @@ step_weight = [pow(0.9,FIX_LEN-i-1) for i in range(FIX_LEN)]
 criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([4]))
 optimizer = optim.Adam(params, lr=learning_rate)
 
+train_losses = []
+train_f1s = []
+train_accuracies = []
+test_losses = []
+test_f1s = []
+test_accuracies = []
+
 for epoch in range(num_epochs):
     state = init_gru_state(batch_size,hidden_size)
     train_loss = 0.0
@@ -190,6 +200,9 @@ for epoch in range(num_epochs):
 
     average_loss = train_loss / train_samples
     print(f"Epoch {epoch+1}/{num_epochs}, \tTrain Loss: {average_loss:.4f}, Accuracy: {accuracy_score(train_label, train_pred):.4f}, Precision: {precision_score(train_label, train_pred):.4f}, Recall: {recall_score(train_label, train_pred):.4f}, F1: {f1_score(train_label, train_pred):.4f}")
+    train_losses.append(average_loss)
+    train_f1s.append(f1_score(train_label, train_pred))
+    train_accuracies.append(accuracy_score(train_label, train_pred))
 
     with torch.no_grad():
         # model.eval()
@@ -198,6 +211,7 @@ for epoch in range(num_epochs):
         test_samples = 0
         test_label = np.array([])
         test_pred = np.array([])
+        test_scores = np.array([])
         for batch in test_loader:
             inputs = batch['inputs'].transpose(0,1)
             labels = batch['label'].reshape(-1)
@@ -213,6 +227,7 @@ for epoch in range(num_epochs):
             test_samples += 1
 
             for id in range(len(labels)):
+                test_scores = np.append(test_scores, float(pred_output[id].item()))
                 if int(labels[id].item()) == 0:
                     test_label = np.append(test_label, 0)
                 else:
@@ -222,6 +237,58 @@ for epoch in range(num_epochs):
                 else:
                     test_pred = np.append(test_pred, 1)
 
-        average_loss = test_loss / test_samples
-        print(f"\t\t\tTest Loss: {average_loss:.4f}, Accuracy: {accuracy_score(test_label, test_pred):.4f}, Precision: {precision_score(test_label, test_pred):.4f}, Recall: {recall_score(test_label, test_pred):.4f}, F1: {f1_score(test_label, test_pred):.4f}")
-        # print(params[0])
+    average_loss = test_loss / test_samples
+    print(f"\t\t\tTest Loss: {average_loss:.4f}, Accuracy: {accuracy_score(test_label, test_pred):.4f}, Precision: {precision_score(test_label, test_pred):.4f}, Recall: {recall_score(test_label, test_pred):.4f}, F1: {f1_score(test_label, test_pred):.4f}")
+    # print(params[0])
+    test_losses.append(average_loss)
+    test_f1s.append(f1_score(test_label, test_pred))
+    test_accuracies.append(accuracy_score(test_label, test_pred))
+    
+    if epoch == num_epochs-1:
+        fpr, tpr, thresholds = roc_curve(test_label, test_scores)
+
+        plt.figure(figsize=(9, 6))
+        plt.plot(fpr, tpr)
+        plt.xlabel('FPR')
+        plt.ylabel('TPR')
+        plt.title('ROC')
+        plt.savefig("./figure/" + choice+ "_ROC.jpg")
+
+        confusion = confusion_matrix(test_label, test_pred)
+
+        plt.figure(figsize=(9, 6))
+        plt.imshow(confusion, interpolation='nearest', cmap=plt.cm.Blues)
+        plt.title('Confusion Matrix')
+        plt.colorbar()
+        plt.xticks([0, 1])
+        plt.yticks([0, 1])
+        plt.xlabel('Predicted Condition')
+        plt.ylabel('Actual Condition')
+        plt.savefig("./figure/" + choice+"_Confusion.jpg")
+
+plt.figure(figsize=(9, 6))
+plt.plot(list(range(1, num_epochs + 1)), train_accuracies, label="train")
+plt.plot(list(range(1, num_epochs + 1)), test_accuracies, label="test")
+plt.legend(loc=4)
+plt.title(choice)
+plt.xlabel("Epoch")
+plt.ylabel("Accuracy")
+plt.savefig("./figure/" + choice + "_Accuracy.jpg", bbox_inches='tight')
+
+plt.figure(figsize=(9, 6))
+plt.plot(list(range(1, num_epochs + 1)), train_f1s, label="train")
+plt.plot(list(range(1, num_epochs + 1)), test_f1s, label="test")
+plt.legend(loc=4)
+plt.title(choice)
+plt.xlabel("Epoch")
+plt.ylabel("F1 Score")
+plt.savefig("./figure/" + choice + "_F1.jpg", bbox_inches='tight')
+
+plt.figure(figsize=(9, 6))
+plt.plot(list(range(1, num_epochs + 1)), train_losses, label="train")
+plt.plot(list(range(1, num_epochs + 1)), test_losses, label="test")
+plt.legend(loc=4)
+plt.title(choice)
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.savefig("./figure/" + choice + "_Loss.jpg", bbox_inches='tight')

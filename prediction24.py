@@ -213,6 +213,7 @@ for choice in choices:
         test_samples = 0
         test_label = np.array([])
         test_pred = np.array([])
+        test_scores = np.array([])
         for batch in test_loader:
             inputs = batch['inputs']
             labels = batch['label'].reshape(-1)
@@ -225,6 +226,7 @@ for choice in choices:
             test_samples += 1
 
             for id in range(len(outputs)):
+                test_scores = np.append(test_scores, float(outputs[id].item()))
                 if int(labels[id].item()) == 0:
                     test_label = np.append(test_label, 0)
                 else:
@@ -241,14 +243,14 @@ for choice in choices:
         test_accuracies.append(accuracy_score(test_label, test_pred))
 
         if epoch == num_epochs-1:
-            fpr, tpr, thresholds = roc_curve(test_label, test_pred)
+            fpr, tpr, thresholds = roc_curve(test_label, test_scores)
 
             plt.figure(figsize=(9, 6))
             plt.plot(fpr, tpr)
             plt.xlabel('FPR')
             plt.ylabel('TPR')
             plt.title('ROC')
-            plt.savefig("../figure/" + choice+ "_ROC.jpg")
+            plt.savefig("./figure/" + choice+ "_ROC.jpg")
 
             confusion = confusion_matrix(test_label, test_pred)
 
@@ -260,7 +262,7 @@ for choice in choices:
             plt.yticks([0, 1])
             plt.xlabel('Predicted Condition')
             plt.ylabel('Actual Condition')
-            plt.savefig("../figure/" + choice+"_Confusion.jpg")
+            plt.savefig("./figure/" + choice+"_Confusion.jpg")
 
     plt.figure(figsize=(9, 6))
     plt.plot(list(range(1, num_epochs + 1)), train_accuracies, label="train")
@@ -269,7 +271,7 @@ for choice in choices:
     plt.title(choice)
     plt.xlabel("Epoch")
     plt.ylabel("Accuracy")
-    plt.savefig("../figure/" + choice + "_Accuracy.jpg", bbox_inches='tight')
+    plt.savefig("./figure/" + choice + "_Accuracy.jpg", bbox_inches='tight')
 
     plt.figure(figsize=(9, 6))
     plt.plot(list(range(1, num_epochs + 1)), train_f1s, label="train")
@@ -278,7 +280,7 @@ for choice in choices:
     plt.title(choice)
     plt.xlabel("Epoch")
     plt.ylabel("F1 Score")
-    plt.savefig("../figure/" + choice + "_F1.jpg", bbox_inches='tight')
+    plt.savefig("./figure/" + choice + "_F1.jpg", bbox_inches='tight')
 
     plt.figure(figsize=(9, 6))
     plt.plot(list(range(1, num_epochs + 1)), train_losses, label="train")
@@ -287,4 +289,4 @@ for choice in choices:
     plt.title(choice)
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
-    plt.savefig("../figure/" + choice + "_Loss.jpg", bbox_inches='tight')
+    plt.savefig("./figure/" + choice + "_Loss.jpg", bbox_inches='tight')
