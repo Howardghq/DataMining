@@ -59,11 +59,11 @@
     \centering
     \begin{minipage}{.43\linewidth}
         \centering
-        \includegraphics[width=\linewidth]{../source_code/attr_0.png}
+        \includegraphics[width=\linewidth]{../attr_0.png}
     \end{minipage}
     \begin{minipage}{.43\linewidth}
         \centering
-        \includegraphics[width=\linewidth]{../source_code/attr_1.png}
+        \includegraphics[width=\linewidth]{../attr_1.png}
     \end{minipage}
 \end{figure}
 
@@ -71,11 +71,11 @@
     \centering
     \begin{minipage}{.43\linewidth}
         \centering
-        \includegraphics[width=\linewidth]{../source_code/err_0.png}
+        \includegraphics[width=\linewidth]{../err_0.png}
     \end{minipage}
     \begin{minipage}{.43\linewidth}
         \centering
-        \includegraphics[width=\linewidth]{../source_code/err_1.png}
+        \includegraphics[width=\linewidth]{../err_1.png}
     \end{minipage}
 \end{figure}
 
@@ -83,7 +83,7 @@
 本节中，我们选择了传统RNN，GRU，LSTM进行回归预测，并用Accuracy、F1分析预测结果，并给出了ROC曲线和混淆矩阵。这是因为Accuracy可以反映出模型在整个数据集上的表现，F1可以反映出模型在正样本和负样本上的综合表现，ROC曲线和混淆矩阵可以体现出模型预测标签和实际标签之间的关系。
 
 \subsection{传统RNN}
-我们使用torch.nn.RNN作为模型对数据集进行训练。可以发现，对于传统RNN，随着epoch轮数的增进，Accuracy和F1 Score变化不明显。这说明RNN对数据集的建模能力不强。Accuracy虽然达到了0.91，但是其仍低于GRU和LSTM的结果，且这是因为数据集中有很多标签为0的数据。同时，F1 Score只有0.4左右，这是较低的。
+我们使用torch.nn.RNN作为模型对数据集进行训练，如图\ref{fig:RNN}所示。可以发现，对于传统RNN，随着epoch轮数的增进，Accuracy和F1 Score变化不明显。这说明RNN对数据集的建模能力不强。Accuracy虽然达到了0.91，但是其仍低于GRU和LSTM的结果，且这是因为数据集中有很多标签为0的数据。同时，F1 Score只有0.4左右，这是较低的。
 
 \begin{figure}[h]
     \centering
@@ -105,6 +105,7 @@
         \includegraphics[width=\linewidth]{../figure/RNN_Confusion.jpg}
     \end{minipage}
     \caption{RNN}
+    \label{fig:RNN}
 \end{figure}
 
 \begin{figure}[h]
@@ -127,6 +128,30 @@
         \includegraphics[width=\linewidth]{../figure/GRU_Confusion.jpg}
     \end{minipage}
     \caption{GRU（torch.nn）}
+    \label{fig:GRU}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \begin{minipage}{.43\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{../figure/GRUManual_Accuracy.jpg}
+    \end{minipage}
+    \begin{minipage}{.43\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{../figure/GRUManual_F1.jpg}
+    \end{minipage}
+
+    \begin{minipage}{.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{../figure/GRUManual_ROC.jpg}
+    \end{minipage}
+    \begin{minipage}{.48    \linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{../figure/GRUManual_Confusion.jpg}
+    \end{minipage}
+    \caption{GRU（人工实现）}
+    \label{fig:GRUM}
 \end{figure}
 
 \begin{figure}[h]
@@ -149,44 +174,49 @@
         \includegraphics[width=\linewidth]{../figure/LSTM_Confusion.jpg}
     \end{minipage}
     \caption{LSTM}
+    \label{fig:LSTM}
 \end{figure}
 
 \subsection{GRU}
 \subsubsection{机器学习库函数}
-我们使用torch.nn.GRU作为模型对数据集进行训练。可以发现，GRU对训练集数据的建模能力强，可以在50个epoch处达到极高的Accuracy和F1 Score。但是可以发现，虽然测试集的F1 Score随着epoch而上升，但是其最高值仍然在0.58左右。这说明模型存在过拟合，且recall较低。这从ROC曲线课混淆矩阵中也能看出。
+我们使用torch.nn.GRU作为模型对数据集进行训练，如图\ref{fig:GRU}所示。可以发现，GRU对训练集数据的建模能力强，可以在50个epoch处达到极高的Accuracy和F1 Score。但是可以发现，虽然测试集的F1 Score随着epoch而上升，但是其最高值仍然在0.58左右。这说明模型存在过拟合，且recall较低。这从ROC曲线课混淆矩阵中也能看出。
 
 \subsubsection{人工实现}
-对于人工实现的GRU，我们使用torch中提供的tensor乘法等方法进行模型的构建。可以发现，Accuracy和F1 Score的变化趋势与调用机器学习库函数的结果相同，但是训练速度慢于调用库函数的场景。这是因为库函数中使用了多种加速和优化方法，而我们的人工实现则并没有使用。同时，可以发现事实上测试集的F1 Score与调用库函数的结果相似。这可能是因为更少的优化方法反而带来了更少的过拟合。
+对于人工实现的GRU，我们使用torch中提供的tensor乘法等方法进行模型的构建，如图\ref{fig:GRUM}所示。可以发现，Accuracy和F1 Score的变化趋势与调用机器学习库函数的结果相同，但是训练速度慢于调用库函数的场景。这是因为库函数中使用了多种加速和优化方法，而我们的人工实现则并没有使用。同时，可以发现事实上测试集的F1 Score与调用库函数的结果相似。这可能是因为更少的优化方法反而带来了更少的过拟合。
+
+\subsection{LSTM}
+我们使用torch.nn.LSTM作为模型对数据集进行训练，如图\ref{fig:LSTM}所示。对于LSTM，可以发现其训练速度也略慢于GRU。同时，其F1 Score与GRU相近，且优于传统RNN。这说明，LSTM在未知长度的时间序列建模任务上仍然有优势，且过拟合的现象相较于GRU并没有那么严重。但是LSTM在Recall上的表现仍然不佳，这可以从混淆矩阵中看出。（图在最后一页）
+
+\section{超参数修改}
+修改学习率为0.05（原本为0.002），可以得到四个模型的结果如图\ref{fig:param}所示。由于篇幅限制，只放置F1曲线的变化。可以发现，LSTM和传统RNN均对模型建模失败，表现出来0的F1 Score。这是因为模型将所有的标签全部预测为了负值，从而使得Precision和Recall都为0。对于GRU，其训练效果仍然远逊于0.002的学习率。因此，可以发现不能将学习率设置得过大。
+
 \begin{figure}[h]
     \centering
     \begin{minipage}{.43\linewidth}
         \centering
-        \includegraphics[width=\linewidth]{../figure/GRUManual_Accuracy.jpg}
+        \includegraphics[width=\linewidth]{../figure/RNN1_F1.jpg}
     \end{minipage}
     \begin{minipage}{.43\linewidth}
         \centering
-        \includegraphics[width=\linewidth]{../figure/GRUManual_F1.jpg}
+        \includegraphics[width=\linewidth]{../figure/GRU1_F1.jpg}
     \end{minipage}
 
-    \begin{minipage}{.48\linewidth}
+    \begin{minipage}{.43\linewidth}
         \centering
-        \includegraphics[width=\linewidth]{../figure/GRUManual_ROC.jpg}
+        \includegraphics[width=\linewidth]{../figure/GRUManual1_F1.jpg}
     \end{minipage}
-    \begin{minipage}{.48    \linewidth}
+    \begin{minipage}{.43\linewidth}
         \centering
-        \includegraphics[width=\linewidth]{../figure/GRUManual_Confusion.jpg}
+        \includegraphics[width=\linewidth]{../figure/LSTM1_F1.jpg}
     \end{minipage}
-    \caption{GRU（人工实现）}
+    \caption{学习率0.05}
+    \label{fig:param}
 \end{figure}
+% 本次大作业中，我们首先对病人的数据集进行清洗，通过规范化数据使得所有数据的区间落入$[0,1]$并使得所有病人的生命体征数据序列等长。
 
-\subsection{LSTM}
-我们使用torch.nn.LSTM作为模型对数据集进行训练。对于LSTM，可以发现其训练速度也略慢于GRU。同时，其F1 Score与GRU相近，且优于传统RNN。这说明，LSTM在未知长度的时间序列建模任务上仍然有优势，且过拟合的现象相较于GRU并没有那么严重。但是LSTM在Recall上的表现仍然不佳，这可以从混淆矩阵中看出。
+% 而后，我们使用传统RNN、GRU（torch.nn版本与人工实现版本）和LSTM对数据集进行建模，并对测试集进行预测。实验结果表明，LSTM和GRU在训练效果上优于传统RNN，而人工实现的GRU则与torch.nn版本相比有着相似的训练趋势和更慢的训练速度。这些都是符合直觉的结果。
 
-\newpage
-\section{小结}
-本次大作业中，我们首先对病人的数据集进行清洗，通过规范化数据使得所有数据的区间落入$[0,1]$并使得所有病人的生命体征数据序列等长。
-
-而后，我们使用传统RNN、GRU（torch.nn版本与人工实现版本）和LSTM对数据集进行建模，并对测试集进行预测。实验结果表明，LSTM和GRU在训练效果上优于传统RNN，而人工实现的GRU则与torch.nn版本相比有着相似的训练趋势和更慢的训练速度。这些都是符合直觉的结果。
-
-同时可以发现，预测结果拥有极高Accuracy和中等F1 Score。这和数据集的质量以及正负标签比例都有关。
+% 同时可以发现，预测结果拥有极高Accuracy和中等F1 Score。这和数据集的质量以及正负标签比例都有关。
+\section{分工说明}
+所有部分均由二人协作完成。
 \end{document}

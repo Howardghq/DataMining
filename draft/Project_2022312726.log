@@ -1,10 +1,10 @@
-This is XeTeX, Version 3.141592653-2.6-0.999994 (TeX Live 2022) (preloaded format=xelatex 2022.9.10)  2 JUN 2023 02:39
+This is XeTeX, Version 3.141592653-2.6-0.999994 (TeX Live 2022) (preloaded format=xelatex 2022.9.10)  2 JUN 2023 17:48
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**"/Users/howardguan/Documents/THU/22-23Spring/Data Warehouse and Data Mining/project/draft/Project_2022312726"
-(/Users/howardguan/Documents/THU/22-23Spring/Data Warehouse and Data Mining/project/draft/Project_2022312726.tex
+**"/Users/howardguan/Documents/THU/22-23Spring/Data Warehouse and Data Mining/project/source_code/draft/Project_2022312726"
+(/Users/howardguan/Documents/THU/22-23Spring/Data Warehouse and Data Mining/project/source_code/draft/Project_2022312726.tex
 LaTeX2e <2021-11-15> patch level 1
 L3 programming layer <2022-02-24> (/usr/local/texlive/2022/texmf-dist/tex/latex/base/article.cls
 Document Class: article 2021/10/04 v1.4n Standard LaTeX document class
@@ -456,14 +456,14 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) [1
 
 ]
-File: ../source_code/attr_0.png Graphic file (type bmp)
-<../source_code/attr_0.png>
-File: ../source_code/attr_1.png Graphic file (type bmp)
-<../source_code/attr_1.png>
-File: ../source_code/err_0.png Graphic file (type bmp)
-<../source_code/err_0.png>
-File: ../source_code/err_1.png Graphic file (type bmp)
-<../source_code/err_1.png>
+File: ../attr_0.png Graphic file (type bmp)
+<../attr_0.png>
+File: ../attr_1.png Graphic file (type bmp)
+<../attr_1.png>
+File: ../err_0.png Graphic file (type bmp)
+<../err_0.png>
+File: ../err_1.png Graphic file (type bmp)
+<../err_1.png>
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
@@ -489,6 +489,17 @@ File: ../figure/GRU_Confusion.jpg Graphic file (type bmp)
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
+File: ../figure/GRUManual_Accuracy.jpg Graphic file (type bmp)
+<../figure/GRUManual_Accuracy.jpg>
+File: ../figure/GRUManual_F1.jpg Graphic file (type bmp)
+<../figure/GRUManual_F1.jpg>
+File: ../figure/GRUManual_ROC.jpg Graphic file (type bmp)
+<../figure/GRUManual_ROC.jpg>
+File: ../figure/GRUManual_Confusion.jpg Graphic file (type bmp)
+<../figure/GRUManual_Confusion.jpg>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
 File: ../figure/LSTM_Accuracy.jpg Graphic file (type bmp)
 <../figure/LSTM_Accuracy.jpg>
 File: ../figure/LSTM_F1.jpg Graphic file (type bmp)
@@ -500,27 +511,27 @@ File: ../figure/LSTM_Confusion.jpg Graphic file (type bmp)
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[3]
-File: ../figure/GRUManual_Accuracy.jpg Graphic file (type bmp)
-<../figure/GRUManual_Accuracy.jpg>
-File: ../figure/GRUManual_F1.jpg Graphic file (type bmp)
-<../figure/GRUManual_F1.jpg>
-File: ../figure/GRUManual_ROC.jpg Graphic file (type bmp)
-<../figure/GRUManual_ROC.jpg>
-File: ../figure/GRUManual_Confusion.jpg Graphic file (type bmp)
-<../figure/GRUManual_Confusion.jpg>
+[3] [4]
+File: ../figure/RNN1_F1.jpg Graphic file (type bmp)
+<../figure/RNN1_F1.jpg>
+File: ../figure/GRU1_F1.jpg Graphic file (type bmp)
+<../figure/GRU1_F1.jpg>
+File: ../figure/GRUManual1_F1.jpg Graphic file (type bmp)
+<../figure/GRUManual1_F1.jpg>
+File: ../figure/LSTM1_F1.jpg Graphic file (type bmp)
+<../figure/LSTM1_F1.jpg>
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[4] [5] [6] (./Project_2022312726.aux) ) 
+[5] [6] (./Project_2022312726.aux) ) 
 Here is how much of TeX's memory you used:
- 9822 strings out of 476179
- 241609 string characters out of 5809544
- 588651 words of memory out of 5000000
- 30397 multiletter control sequences out of 15000+600000
+ 9877 strings out of 476179
+ 243534 string characters out of 5809544
+ 588691 words of memory out of 5000000
+ 30448 multiletter control sequences out of 15000+600000
  484122 words of font info for 105 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 89i,7n,97p,465b,292s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 89i,7n,97p,477b,288s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
 Output written on Project_2022312726.pdf (6 pages).
